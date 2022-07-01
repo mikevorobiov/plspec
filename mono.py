@@ -7,7 +7,7 @@ class Mono(QApp):
     Abstraction class for a Cornerstone 260 monochromator 
     control. It requires cornerstone.dll (win32) library
     which exsits under win32 only.
-    The program must be run inder win32 version of python.
+    The program must be run under win32 version of python.
     Python 3.10 was used at the time it was written. 
     '''
     is_connected = False
@@ -42,7 +42,7 @@ class Mono(QApp):
             print('Succesfuly connected to the monochromator!')
         except:
             self.is_connected = False
-            print('Error: Couldn\'t connect to the monochromator.\n\tTroubleshoot and try again!')
+            print('Error: Couldn\'t connect to the monochromator.\n\tTroubleshoot and try again.')
         return 0
 
     def query(self):
