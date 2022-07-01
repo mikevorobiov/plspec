@@ -90,7 +90,7 @@ class Spectrum(Mono):
 
         self.nsamples += 1
         return 0
-
+  
     def get_wavelength(self):
         return self.wavelength
 
