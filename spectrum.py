@@ -16,13 +16,17 @@ class Spectrum(Mono):
     is_xshifted = False
     is_scaled = False
     is_saved = False
+    is_shown = True
 
+    id = ''
+    number = 0
     saving_prefix = ''
-    saving_columns = ['wl', 'e', 'intensity', 'corrections', 'spectrum']
+    saving_columns = ['wl', 'e', 'intensity', 'corrections', 'spectrum', 'wshifted', 'scaled']
 
     nsamples = 0
     step = 0.0
-    xshift = 0.0
+    eshift = 0.0
+    wshift = 0.0
     scale = 1.0
     
     integration_time = 0.0              # Integration time of the DAC (sec)
@@ -32,27 +36,95 @@ class Spectrum(Mono):
     temperature = 0.0                   # Sample temperature in absolute units (Kelvin)
     correction_index = 0                # Index that represents proper correction curve
 
-    wavelength = np.empty()             # Wavelngth sampling positions (nm)
+    wavelength = []                     # Wavelngth sampling positions (nm)
+    wavelength_shifted = []
     intensity_raw = np.empty()          # PL intensity raw measurements (counts)
     background = np.empty()             # Background parasitic counts if needed (counts)
 
     energy = np.empty()                 # Energy sampling positions (eV)
+    energy_shifted = np.empty()
     intensity_corrected = np.empty()    # PL intensity corrected samples in units proportional to spectal photon flux (counts/(sec*nm))
+    intensity_scaled = np.empty()
+
+    calibration_curve = []
     spectral_response = np.empty()      # Spectral response function of the experimental setup (counts)
 
 
-
-    self._init_(self):
+    def __init__(self):
+        self.step = super().wavelength_step
+        self.integration_time = super().integration_time
         return 0
 
-    self.calibrate(self):
+    def load_calibration(self):
+        try:
+            self.calibration_curve = np.genfromtxt('calibration_curve.csv', delimiter=',')
+            print('Calibration curve successfuly loaded!')
+        except:
+            print('Error: Couldn\'t load calibration curve from a file.')
+        # Further resample curve according to self.wavelength
         return 0
 
-    self.get_raw(self):
+    def recalibrate(self):
+        self.intensity_corrected = self.intensity_raw * self.wavelength**3 / (self.in_slit**2 * self.excitation_intensity * self.spectral_response)
         return 0
 
-    self.get_corrected(self):
+    def append_reading(self):
+        x = super().current_position
+        y = super().current_reading
+
+        x_cal = self.calibration_curve[:,0]
+        y_cal = self.calibration_curve[:,1]
+        cal = np.interp(x, x_cal, y_cal)
+
+        y_corrected = y * x**3 / (self.in_slit**2 * self.excitation_intensity * cal)
+
+        self.wavelength = np.append(self.wavelength, x)
+        self.wavelength_shifted = np.append(self.wavelength, x + self.wshift)
+        self.energy = np.append(self.wavelength, 1239.8/x)
+        self.energy_shifted = np.append(self.wavelength, 1239.8/(x + self.wshift))
+
+        self.spectral_response = np.append(self.spectral_response, cal)
+        self.intensity_raw = np.append(self.intensity_raw, y)
+        self.intensity_corrected = np.append(self.intensity_corrected, y_corrected)
+        self.intensity_scaled = np.append(self.intensity_scaled, y_corrected * self.scale)
+
+        self.nsamples += 1
         return 0
 
-    self.save(self):
+    def get_wavelength(self):
+        return self.wavelength
+
+    def get_wavelength_shifted(self):
+        return self.wavelength_shifted
+
+    def get_energy(self):
+        return self.energy
+
+    def get_energy_shifted(self):
+        return self.energy_shifted
+
+    def get_raw(self):
+        return self.intensity_raw
+
+    def get_corrected(self):
+        return self.intensity_corrected
+    
+    def get_scaled(self):
+        return self.intensity_scaled
+
+    def get_background(self):
+        return self.background
+
+    def set_id(self, id=''):
+        self.id = id
+        return 0
+
+    def set_number(self, number=0):
+        self.number = number
+        return 0
+
+    def show(self):
+        return 0
+
+    def save(self):
         return 0
