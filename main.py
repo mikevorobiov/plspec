@@ -23,6 +23,7 @@ class MainWindow(QMainWindow):
         # Layouts
         layout_main = QHBoxLayout()
         layout_right = QVBoxLayout()
+        layout_bottom = QHBoxLayout()
 
         # Button widgets
         btn = QPushButton('Holder')
@@ -43,11 +44,12 @@ class MainWindow(QMainWindow):
 
         layout_main.addWidget(btn)
         layout_main.addLayout(layout_right)
+        layout_right.addLayout(layout_bottom)
         layout_right.addWidget(plot_main)
-        layout_right.addWidget(self.btn_add_scan)
-        layout_right.addWidget(self.btn_start_scan)
-        layout_right.addWidget(btn_abort_scan)
-        layout_right.addWidget(self.btn_cont_meas)
+        layout_bottom.addWidget(self.btn_add_scan)
+        layout_bottom.addWidget(self.btn_start_scan)
+        layout_bottom.addWidget(btn_abort_scan)
+        layout_bottom.addWidget(self.btn_cont_meas)
 
         widget = QWidget()
         widget.setLayout(layout_main)
