@@ -1,8 +1,8 @@
 import numpy as np
-from spectrum import Spectrum
-from daq import Daq
+#from spectrum import Spectrum
+#from daq import Daq
 
-class Mono(QApp):
+class Mono():
     '''
     Abstraction class for a Cornerstone 260 monochromator 
     control. It requires cornerstone.dll (win32) library
@@ -29,7 +29,7 @@ class Mono(QApp):
 
     integration_time = 0.5
 
-    daq = Daq()
+    #daq = Daq()
 
     def __init__(self):
         return 0

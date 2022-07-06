@@ -16,7 +16,8 @@ class Spectrum(Mono):
     is_xshifted = False
     is_scaled = False
     is_saved = False
-    is_shown = True
+    is_shown = False
+    is_empty = True
 
     id = ''
     number = 0
@@ -29,7 +30,7 @@ class Spectrum(Mono):
     wshift = 0.0
     scale = 1.0
     
-    integration_time = 0.0              # Integration time of the DAC (sec)
+    integration_time = 0.0              # Integration time of the DAQ (sec)
     in_slit = 0.1                       # Monochromator input slit width in (mm)
     out_slit = 0.1                      # Monochromator output slit width in (mm)
     excitation_intensity = 0.0          # Laser excitation intensity (W/cm2)
