@@ -1,7 +1,8 @@
 import numpy as np
 from mono import Mono
+from ui_main_window import Ui_MainWindow
 
-class Spectrum(Mono):
+class Spectrum(Ui_MainWindow):
     '''
     Spectrum class encapsulates raw data as
         - wavelength samples in the 'wavelength' numpy array
@@ -12,6 +13,7 @@ class Spectrum(Mono):
         - the spectral response is stored in 'spectral_response' array
     Python 3.10 was used at the time it was written.
     '''
+    is_inporgress = False
     is_corrected = False
     is_xshifted = False
     is_scaled = False
@@ -39,22 +41,21 @@ class Spectrum(Mono):
 
     wavelength = []                     # Wavelngth sampling positions (nm)
     wavelength_shifted = []
-    intensity_raw = np.empty()          # PL intensity raw measurements (counts)
-    background = np.empty()             # Background parasitic counts if needed (counts)
+    intensity_raw = []                  # PL intensity raw measurements (counts)
+    background = []                     # Background parasitic counts if needed (counts)
 
-    energy = np.empty()                 # Energy sampling positions (eV)
-    energy_shifted = np.empty()
-    intensity_corrected = np.empty()    # PL intensity corrected samples in units proportional to spectal photon flux (counts/(sec*nm))
-    intensity_scaled = np.empty()
+    energy = []                         # Energy sampling positions (eV)
+    energy_shifted = [] 
+    intensity_corrected = []            # PL intensity corrected samples in units proportional to spectal photon flux (counts/(sec*nm))
+    intensity_scaled = []   
 
     calibration_curve = []
-    spectral_response = np.empty()      # Spectral response function of the experimental setup (counts)
+    spectral_response = []              # Spectral response function of the experimental setup (counts)
 
 
     def __init__(self):
         self.step = super().wavelength_step
         self.integration_time = super().integration_time
-        return 0
 
     def load_calibration(self):
         try:

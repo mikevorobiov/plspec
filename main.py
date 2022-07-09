@@ -1,84 +1,75 @@
-from cProfile import label
 from PySide6.QtWidgets import QApplication, QMainWindow
-from PySide6.QtWidgets import QWidget
-from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout
-from PySide6.QtWidgets import QPushButton
-from PySide6.QtWidgets import QDialog, QDialogButtonBox
-from PySide6.QtWidgets import QLabel
+from PySide6.QtWidgets import QDialog, QDialogButtonBox, QLabel, QVBoxLayout
+from ui_main_window import Ui_MainWindow
 
 
-import pyqtgraph as pg
-
-import mono
-
-# Only needed for access to command line arguments
+from spectrum import Spectrum
 import sys
 
-
-class MainWindow(QMainWindow):
+class UI(QMainWindow):
     def __init__(self):
-        super(MainWindow, self).__init__()
-        self.setWindowTitle('PL Spec v0.01 beta')
+        super().__init__()
 
-        # Layouts
-        layout_main = QHBoxLayout()
-        layout_right = QVBoxLayout()
-        layout_bottom = QHBoxLayout()
+        self.ui = Ui_MainWindow()
+        self.ui.setupUi(self)
 
-        # Button widgets
-        btn = QPushButton('Holder')
-        self.btn_add_scan = QPushButton('Add Scan')
-        self.btn_start_scan = QPushButton('Start Scan')
-        btn_abort_scan = QPushButton('Abort Scan')
-        self.btn_cont_meas = QPushButton('Continuous')
+        # Data
+        self.spectral_data = [Spectrum()]
+
+
+        self.ui.plot_main_corrected.setLabel('bottom', 'Photon Energy', units='eV')
+        self.ui.plot_main_corrected.setLabel('left', 'PL Intensity (rel. units)')
+
+        self.ui.plot_main_raw.setLabel('bottom', 'Wavelength (nm)')
+        self.ui.plot_main_raw.setLabel('left', 'Counts per second')
 
         # Signals
-        self.btn_add_scan.clicked.connect(self.add_scan_clicked)
-        self.btn_start_scan.clicked.connect(self.start_scan_clicked)
-        btn_abort_scan.clicked.connect(self.abort_scan_clicked)
+        self.ui.btn_add_scan.clicked.connect(self.add_scan_clicked)
+        self.ui.btn_start_scan.clicked.connect(self.start_scan_clicked)
+        self.ui.btn_abort_scan.clicked.connect(self.abort_scan_clicked)
+        self.ui.btn_delete.clicked.connect(self.delete_scan_clicked)
 
-        # Plots
-        plot_main = pg.PlotWidget()
-        plot_main.setLabel('bottom', 'Photon Energy', units='eV')
-        plot_main.setLabel('left', 'PL Intensity (rel. units)')
-
-        layout_main.addWidget(btn)
-        layout_main.addLayout(layout_right)
-        layout_right.addLayout(layout_bottom)
-        layout_right.addWidget(plot_main)
-        layout_bottom.addWidget(self.btn_add_scan)
-        layout_bottom.addWidget(self.btn_start_scan)
-        layout_bottom.addWidget(btn_abort_scan)
-        layout_bottom.addWidget(self.btn_cont_meas)
-
-        widget = QWidget()
-        widget.setLayout(layout_main)
-        self.setCentralWidget(widget)
 
     def add_scan_clicked(self, s):
         dlg = ScanSetupDialog(self)
         if dlg.exec():
-            print('Success!')
+            nrows = self.ui.table_specs.rowCount()
+            self.ui.table_specs.insertRow(nrows)
+            self.spectral_data.append(Spectrum())
+            print(len(self.spectral_data))
+            print('Scan added.')
         else:
-            print('Cancel!')
+            print('Scan adding cancelled.')
 
     def abort_scan_clicked(self, s):
         dlg = ScanAbortDialog(self)
         if dlg.exec():
+            self.ui.btn_start_scan.setEnabled(True)
+            self.ui.btn_add_scan.setEnabled(True)
+            self.ui.btn_cont.setEnabled(True)
+            self.ui.btn_apply.setEnabled(True)
+            self.ui.btn_abort_scan.setEnabled(False)
             print('Scan Aborted!')
-            self.btn_start_scan.setEnabled(True)
-            self.btn_add_scan.setEnabled(True)
-            self.btn_cont_meas.setEnabled(True)
         else:
-            print('Continue scanning!')
+            print('Continue scanning.')
 
     def start_scan_clicked(self, s):
-        self.btn_start_scan.setEnabled(False)
-        self.btn_add_scan.setEnabled(False)
-        self.btn_cont_meas.setEnabled(False)
+        self.ui.btn_start_scan.setEnabled(False)
+        self.ui.btn_add_scan.setEnabled(False)
+        self.ui.btn_apply.setEnabled(False)
+        self.ui.btn_cont.setEnabled(False)
+        self.ui.btn_abort_scan.setEnabled(True)
+
+    def delete_scan_clicked(self, s):
+        row_selected = self.ui.table_specs.currentRow()
+        dlg = ScanAbortDialog(self)
+        if dlg.exec():
+            self.ui.table_specs.removeRow(row_selected)
+            print('Scan #{:1.0f} Deleted!'.format(row_selected))
+        
 
 class ScanSetupDialog(QDialog):
-    def __init__(self, parent=MainWindow):
+    def __init__(self, parent=UI):
         super().__init__(parent)
 
         self.setWindowTitle('Add Scan')
@@ -95,7 +86,7 @@ class ScanSetupDialog(QDialog):
         self.setLayout(self.layout)
 
 class ScanAbortDialog(QDialog):
-    def __init__(self, parent=MainWindow):
+    def __init__(self, parent=UI):
         super().__init__(parent)
 
         self.setWindowTitle('Abort Scan')
@@ -111,15 +102,25 @@ class ScanAbortDialog(QDialog):
         self.layout.addWidget(self.buttonBox)
         self.setLayout(self.layout)
 
+class ScanDeleteDialog(QDialog):
+    def __init__(self, parent=UI):
+        super().__init__(parent)
 
-# You need one (and only one) QApplication instance per application.
-# Pass in sys.argv to allow command line arguments for your app.
-# If you know you won't use command line arguments QApplication([]) works too.
-app = QApplication(sys.argv)
+        self.setWindowTitle('Delete Scan')
 
-# Create a Qt widget, which will be our window.
-window = MainWindow()
-window.show()  # IMPORTANT!!!!! Windows are hidden by default.
+        QBtn = QDialogButtonBox.Ok | QDialogButtonBox.Cancel
+        self.buttonBox = QDialogButtonBox(QBtn)
+        self.buttonBox.accepted.connect(self.accept)
+        self.buttonBox.rejected.connect(self.reject)
 
-# Start the event loop.
-app.exec()
+        self.layout = QVBoxLayout()
+        message = QLabel('Delete selected the scan?\nThe measurement will be lost!\nThink twise...')
+        self.layout.addWidget(message)
+        self.layout.addWidget(self.buttonBox)
+        self.setLayout(self.layout)
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    win = UI()
+    win.show()
+    app.exec()
